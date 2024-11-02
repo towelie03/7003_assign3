@@ -2,15 +2,17 @@ import pyshark
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import os
 
-# Replace with your PCAP file path
-pcap_file = 'your_file.pcap'
+# Replace with the path to your PCAP folder and file name
+pcap_folder = 'pcaps'
+pcap_filename = 'book_dl_tcp_analysis.pcap'  # Change to your actual file name
+pcap_file = os.path.join(pcap_folder, pcap_filename)
 
 # Initialize lists to store data
 timestamps = []
 throughput = []
 window_sizes = []
-congestion_windows = []
 retransmissions = []
 cumulative_retransmissions = []
 
@@ -46,8 +48,11 @@ for packet in cap:
 # Create time intervals for throughput
 time_intervals = np.arange(min(timestamps), max(timestamps), 1)
 
-# Calculate throughput in Mbps
-throughput_mbps = [sum(throughput[i:i+1]) * 8 / 1e6 for i in range(len(timestamps))]
+# Calculate throughput in Mbps (rolling sum over a 1-second window)
+throughput_mbps = []
+for t in time_intervals:
+    bytes_in_interval = sum(length for ts, length in zip(timestamps, throughput) if t <= ts < t + 1)
+    throughput_mbps.append(bytes_in_interval * 8 / 1e6)  # Convert bytes to Mbps
 
 # Plotting
 
@@ -93,4 +98,3 @@ plt.show()
 
 # Cleanup
 cap.close()
-
